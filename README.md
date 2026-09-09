@@ -1,6 +1,11 @@
-# Immersive Aircraft
+# Immersive Aircraft — 1.12.2 backport
 
-This mod adds bunch of rustic aircraft to travel, transport, and explore! The aircraft have a strong focus on being vanilla-faithful and many details and functionalities, without being overly complicated.
+Fork of [Luke100000's Immersive Aircraft](https://github.com/Luke100000/ImmersiveAircraft),
+dedicated to the **Minecraft 1.12.2, Forge only** backport. This repository
+tracks only the `1.12.2` branch; for modern Minecraft versions see the
+upstream repository.
+
+The original mod adds bunch of rustic aircraft to travel, transport, and explore! The aircraft have a strong focus on being vanilla-faithful and many details and functionalities, without being overly complicated.
 
 [![Crowdin](https://badges.crowdin.net/immersive-collection/localized.svg)](https://crowdin.com/project/immersive-collection)
 
@@ -8,13 +13,12 @@ Hosted on
 [CurseForge](https://www.curseforge.com/minecraft/mc-mods/immersive-aircraft) and
 [Modrinth](https://modrinth.com/mod/immersive-aircraft)
 
-## 1.12.2 backport
+## About the backport
 
-This branch is a backport of the mod (based on the 1.16.5 codebase, with the
-1.20.1 content — Warship, Bamboo Hopper and the weapon system — ported on top)
-to **Minecraft 1.12.2, Forge only**.
+Based on the 1.16.5 codebase, with the 1.20.1 content — Warship, Bamboo
+Hopper and the weapon system — ported on top.
 
-Differences from the modern branches:
+Differences from the modern upstream branches:
 
 - Single-module Forge mod, no Fabric/Architectury.
 - Configuration via the in-game mod list ("Config" button), powered by Forge's
