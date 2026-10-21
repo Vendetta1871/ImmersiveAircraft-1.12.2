@@ -18,18 +18,19 @@ public class Entities {
     private static int nextId = 0;
 
     public static void bootstrap() {
-        register("gyrodyne", GyrodyneEntity.class);
-        register("biplane", BiplaneEntity.class);
-        register("airship", AirshipEntity.class);
-        register("cargo_airship", CargoAirshipEntity.class);
-        register("quadrocopter", QuadrocopterEntity.class);
-        register("warship", WarshipEntity.class);
-        register("bamboo_hopper", BambooHopperEntity.class);
-        register("bullet", immersive_aircraft.entity.bullet.BulletEntity.class);
-        register("tiny_tnt", immersive_aircraft.entity.bullet.TinyTNT.class);
+        // tracking ranges (blocks) and update intervals follow the 1.20.1 clientTrackingRange (chunks)
+        register("gyrodyne", GyrodyneEntity.class, 192, 3);
+        register("biplane", BiplaneEntity.class, 192, 3);
+        register("airship", AirshipEntity.class, 192, 3);
+        register("cargo_airship", CargoAirshipEntity.class, 192, 3);
+        register("quadrocopter", QuadrocopterEntity.class, 160, 3);
+        register("warship", WarshipEntity.class, 256, 3);
+        register("bamboo_hopper", BambooHopperEntity.class, 224, 3);
+        register("bullet", immersive_aircraft.entity.bullet.BulletEntity.class, 160, 10);
+        register("tiny_tnt", immersive_aircraft.entity.bullet.TinyTNT.class, 160, 10);
     }
 
-    private static void register(String name, Class<? extends net.minecraft.entity.Entity> entityClass) {
-        EntityRegistry.registerModEntity(Main.locate(name), entityClass, Main.MOD_ID + "." + name, nextId++, Main.instance, 64, 3, true);
+    private static void register(String name, Class<? extends net.minecraft.entity.Entity> entityClass, int trackingRange, int updateFrequency) {
+        EntityRegistry.registerModEntity(Main.locate(name), entityClass, Main.MOD_ID + "." + name, nextId++, Main.instance, trackingRange, updateFrequency, true);
     }
 }

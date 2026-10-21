@@ -161,19 +161,25 @@ public abstract class EngineAircraft extends AircraftEntity {
         // Fuel
         if (fuel.length > 0 && !world.isRemote) {
             float consumption = getFuelConsumption();
-            while (consumption > 0 && (consumption >= 1 || rand.nextFloat() < consumption)) {
-                for (int i = 0; i < fuel.length; i++) {
-                    if (fuel[i] > 0) {
-                        fuel[i]--;
-                    }
+            if (consumption > 0) {
+                // whole units plus a random chance for the fraction, computed at once instead of
+                // looping per unit so that an absurd consumption cannot stall the server tick
+                int burnt = (int) consumption;
+                if (burnt < Integer.MAX_VALUE && rand.nextFloat() < consumption - burnt) {
+                    burnt++;
                 }
-                consumption--;
+                for (int i = 0; i < fuel.length; i++) {
+                    fuel[i] = Math.max(0, fuel[i] - burnt);
+                }
             }
         }
 
         // Refuel
         if (isBeingRidden()) {
-            refuel();
+            // the inventory belongs to the server, the client copy is only synced
+            if (!world.isRemote) {
+                refuel();
+            }
 
             // Fuel notification
             if (getControllingPassenger() instanceof EntityPlayerMP) {
@@ -196,6 +202,22 @@ public abstract class EngineAircraft extends AircraftEntity {
         } else {
             lastFuelState = FuelState.NEVER;
         }
+    }
+
+    @Override
+    public void readEntityFromNBT(NBTTagCompound nbt) {
+        super.readEntityFromNBT(nbt);
+
+        // the boiler count may differ from the saved one if the slot layout changed
+        int[] saved = nbt.getIntArray("Fuel");
+        System.arraycopy(saved, 0, fuel, 0, Math.min(saved.length, fuel.length));
+    }
+
+    @Override
+    public void writeEntityToNBT(NBTTagCompound nbt) {
+        super.writeEntityToNBT(nbt);
+
+        nbt.setIntArray("Fuel", fuel);
     }
 
     protected boolean isFuelLow() {

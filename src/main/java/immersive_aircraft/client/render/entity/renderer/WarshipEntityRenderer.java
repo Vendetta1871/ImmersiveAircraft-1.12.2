@@ -14,8 +14,13 @@ import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -66,20 +71,73 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
                     new Object(id, "gondola").setRenderConsumer(this::renderGondola)
             );
 
+    /**
+     * Mesh key lists derived from the model tree, rebuilt only when the baked model changes
+     * (resource reload) instead of every frame.
+     */
+    private BBModelBridge.Baked keysFor;
+    private List<String> envelopeKeys, gondolaKeys, turretKeys, armsKeys, boltKeys;
+    private List<String> leftLimbKeys, leftHingeKeys, rightLimbKeys, rightHingeKeys;
+
+    private void updateKeys() {
+        BBModelBridge.Baked baked = BBModelBridge.get(id);
+        if (baked == keysFor) {
+            return;
+        }
+        keysFor = baked;
+
+        envelopeKeys = filterKeys(baked, "envelope", ENVELOPE_SPECIAL, true);
+
+        Set<String> gondolaExcluded = new HashSet<>(subtree(baked, "turret_seat"));
+        gondolaExcluded.add("propeller");
+        gondolaKeys = filterKeys(baked, "gondola", gondolaExcluded, true);
+
+        turretKeys = filterKeys(baked, "turret_seat", subtree(baked, "arms_joint"), true);
+
+        Set<String> armsExcluded = new HashSet<>(subtree(baked, "bolt"));
+        armsExcluded.addAll(subtree(baked, "left_limb_base"));
+        armsExcluded.addAll(subtree(baked, "right_limb_base"));
+        armsKeys = filterKeys(baked, "arms_joint", armsExcluded, true);
+
+        boltKeys = filterKeys(baked, "bolt", Collections.emptySet(), false);
+
+        leftLimbKeys = filterKeys(baked, "left_limb_base", subtree(baked, "string_hinge"), false);
+        leftHingeKeys = filterKeys(baked, "string_hinge", Collections.emptySet(), false);
+        rightLimbKeys = filterKeys(baked, "right_limb_base", subtree(baked, "string_hinge2"), false);
+        rightHingeKeys = filterKeys(baked, "string_hinge2", Collections.emptySet(), false);
+    }
+
+    private static List<String> subtree(BBModelBridge.Baked baked, String bone) {
+        List<String> keys = baked.subtreeMeshKeys.get(bone);
+        return keys == null ? Collections.emptyList() : keys;
+    }
+
+    /**
+     * Unique mesh keys of the bone's subtree without the excluded ones, optionally only those of
+     * the base texture (index 0).
+     */
+    private static List<String> filterKeys(BBModelBridge.Baked baked, String bone, Collection<String> excluded, boolean baseTextureOnly) {
+        Set<String> keys = new LinkedHashSet<>();
+        for (String key : subtree(baked, bone)) {
+            if (!excluded.contains(key) && (!baseTextureOnly || baked.meshTexture.get(key) == 0)) {
+                keys.add(key);
+            }
+        }
+        return new ArrayList<>(keys);
+    }
+
     public WarshipEntityRenderer(RenderManager renderManager) {
         super(renderManager);
         this.shadowSize = 2.5f;
     }
 
     private void renderEnvelope(T entity, float tickDelta) {
+        updateKeys();
         bindTexture(getTexture(entity));
         GlStateManager.enableCull();
 
         // static envelope structure
-        for (String key : BBModelBridge.getSubtreeMeshKeys(id, "envelope")) {
-            if (ENVELOPE_SPECIAL.contains(key) || BBModelBridge.get(id).meshTexture.get(key) != 0) {
-                continue;
-            }
+        for (String key : envelopeKeys) {
             renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
@@ -128,16 +186,12 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
     }
 
     private void renderGondola(T entity, float tickDelta) {
+        updateKeys();
         bindTexture(getTexture(entity));
         GlStateManager.enableCull();
 
-        Set<String> turretKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "turret_seat"));
-
         // static gondola structure
-        for (String key : BBModelBridge.getSubtreeMeshKeys(id, "gondola")) {
-            if (turretKeys.contains(key) || key.equals("propeller") || BBModelBridge.get(id).meshTexture.get(key) != 0) {
-                continue;
-            }
+        for (String key : gondolaKeys) {
             renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
@@ -163,11 +217,8 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
             GlStateManager.rotate(-entity.turretYaw.getSmooth(tickDelta), 0.0f, 1.0f, 0.0f);
             GlStateManager.translate(-seatPivot[0], -seatPivot[1], -seatPivot[2]);
 
-            Set<String> armsKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "arms_joint"));
-            for (String key : BBModelBridge.getSubtreeMeshKeys(id, "turret_seat")) {
-                if (!armsKeys.contains(key) && BBModelBridge.get(id).meshTexture.get(key) == 0) {
-                    renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-                }
+            for (String key : turretKeys) {
+                renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
             }
 
             float[] armsPivot = BBModelBridge.getPivot(id, "arms_joint");
@@ -180,15 +231,8 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
                 // crossbow reload animation (1.20.1: turret_cooldown variable)
                 float loaded = 1.0f - entity.getTurret().getCooldown();
 
-                Set<String> boltKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "bolt"));
-                Set<String> leftLimbKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "left_limb_base"));
-                Set<String> rightLimbKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "right_limb_base"));
-
                 for (String key : armsKeys) {
-                    if (!boltKeys.contains(key) && !leftLimbKeys.contains(key) && !rightLimbKeys.contains(key)
-                            && BBModelBridge.get(id).meshTexture.get(key) == 0) {
-                        renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-                    }
+                    renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
                 }
 
                 // bolt position
@@ -201,8 +245,8 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
                     GlStateManager.popMatrix();
                 }
 
-                renderLimb(id, "left_limb_base", "string_hinge", -loaded * 4.0f, loaded * 20.0f, leftLimbKeys);
-                renderLimb(id, "right_limb_base", "string_hinge2", loaded * 5.0f, -loaded * 20.0f, rightLimbKeys);
+                renderLimb(id, "left_limb_base", "string_hinge", -loaded * 4.0f, loaded * 20.0f, leftLimbKeys, leftHingeKeys);
+                renderLimb(id, "right_limb_base", "string_hinge2", loaded * 5.0f, -loaded * 20.0f, rightLimbKeys, rightHingeKeys);
 
                 GlStateManager.popMatrix();
             }
@@ -215,12 +259,11 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
      * Renders a limb subtree rotated around the limb base pivot, with the string hinge
      * subtree nested inside with its own rotation (crossbow reload animation).
      */
-    private void renderLimb(ResourceLocation id, String limbBone, String hingeBone, float limbDegrees, float hingeDegrees, Set<String> limbKeys) {
-        if (limbKeys.isEmpty()) {
+    private void renderLimb(ResourceLocation id, String limbBone, String hingeBone, float limbDegrees, float hingeDegrees, List<String> limbKeys, List<String> hingeKeys) {
+        if (limbKeys.isEmpty() && hingeKeys.isEmpty()) {
             return;
         }
         float[] limbPivot = BBModelBridge.getPivot(id, limbBone);
-        Set<String> hingeKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, hingeBone));
 
         GlStateManager.pushMatrix();
         if (limbPivot != null) {
@@ -229,9 +272,7 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
             GlStateManager.translate(-limbPivot[0], -limbPivot[1], -limbPivot[2]);
         }
         for (String key : limbKeys) {
-            if (!hingeKeys.contains(key)) {
-                renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-            }
+            renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         if (!hingeKeys.isEmpty()) {

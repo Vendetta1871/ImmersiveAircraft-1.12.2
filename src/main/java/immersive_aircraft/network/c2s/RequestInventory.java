@@ -37,7 +37,10 @@ public class RequestInventory extends Message {
             InventoryVehicleEntity vehicle = (InventoryVehicleEntity) entity;
             for (int i = 0; i < vehicle.getInventoryDescription().getLastSyncIndex(); i++) {
                 ItemStack stack = vehicle.getInventory().getStack(i);
-                NetworkHandler.sendToPlayer(new InventoryUpdateMessage(this.vehicleId, i, stack), (EntityPlayerMP)e);
+                // the client copy starts out empty, so empty slots need no update
+                if (!stack.isEmpty()) {
+                    NetworkHandler.sendToPlayer(new InventoryUpdateMessage(this.vehicleId, i, stack), (EntityPlayerMP)e);
+                }
             }
         }
     }

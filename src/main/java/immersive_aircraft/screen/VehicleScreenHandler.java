@@ -91,7 +91,7 @@ public class VehicleScreenHandler extends Container {
         return newStack;
     }
 
-    // Overwritten since max stack size isn't considered in vanilla
+    // Overwritten since the slot stack limit isn't considered in vanilla; the item's own max stack size still applies
     @Override
     protected boolean mergeItemStack(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection) {
         boolean inserted = false;
@@ -104,7 +104,7 @@ public class VehicleScreenHandler extends Container {
                 ItemStack target = slot.getStack();
                 if (!target.isEmpty() && ItemStack.areItemsEqual(stack, target) && ItemStack.areItemStackTagsEqual(stack, target)) {
                     int diff = target.getCount() + stack.getCount();
-                    int maxCount = slot.getItemStackLimit(stack);
+                    int maxCount = Math.min(slot.getItemStackLimit(stack), stack.getMaxStackSize());
                     if (diff <= maxCount) {
                         stack.setCount(0);
                         target.setCount(diff);
@@ -126,7 +126,7 @@ public class VehicleScreenHandler extends Container {
             for (int i = startIndex; i < endIndex; i++) {
                 Slot slot = this.inventorySlots.get(i);
                 ItemStack target = slot.getStack();
-                int maxCount = slot.getItemStackLimit(target);
+                int maxCount = Math.min(slot.getItemStackLimit(stack), stack.getMaxStackSize());
                 if (target.isEmpty() && slot.isItemValid(stack)) {
                     if (stack.getCount() > maxCount) {
                         slot.putStack(stack.splitStack(maxCount));

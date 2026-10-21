@@ -25,7 +25,7 @@ abstract public class Rotorcraft extends EngineAircraft {
         Vec3d newVelocity = (velocity.normalize().scale((1.0 - getProperties().getLift())))
                 .add(direction.scale(getProperties().getLift()))
                 .scale(velocity.length() * (drag * getProperties().getDriftDrag() + (1.0 - getProperties().getDriftDrag())));
-        setVelocity(
+        setMotion(
                 newVelocity.x,
                 getVelocity().y,
                 newVelocity.z

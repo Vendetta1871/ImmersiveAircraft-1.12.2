@@ -47,7 +47,7 @@ public abstract class AircraftEntity extends InventoryVehicleEntity {
         }
 
         if (Double.isNaN(getVelocity().x) || Double.isNaN(getVelocity().y) || Double.isNaN(getVelocity().z)) {
-            setVelocity(0, 0, 0);
+            setMotion(0, 0, 0);
         }
 
         super.onUpdate();
@@ -114,7 +114,7 @@ public abstract class AircraftEntity extends InventoryVehicleEntity {
 
         // friction
         Vec3d velocity = getVelocity();
-        setVelocity(velocity.x * decay * getHorizontalVelocityDelay(), velocity.y * decay * getVerticalVelocityDelay() + gravity, velocity.z * decay * getHorizontalVelocityDelay());
+        setMotion(velocity.x * decay * getHorizontalVelocityDelay(), velocity.y * decay * getVerticalVelocityDelay() + gravity, velocity.z * decay * getHorizontalVelocityDelay());
         pressingInterpolatedX.decay(0.0f, 1.0f - decay * getRotationDecay());
         pressingInterpolatedZ.decay(0.0f, 1.0f - decay * getRotationDecay());
 
@@ -135,8 +135,8 @@ public abstract class AircraftEntity extends InventoryVehicleEntity {
 
     public float getWindStrength() {
         float sensitivity = getProperties().getWindSensitivity();
-        float thundering = world.getRainStrength(0.0f);
-        float raining = world.getThunderStrength(0.0f);
+        float thundering = world.getThunderStrength(0.0f);
+        float raining = world.getRainStrength(0.0f);
         float weather = (float)((Config.getInstance().windClearWeather + getVelocity().length()) + thundering * Config.getInstance().windThunderWeather + raining * Config.getInstance().windRainWeather);
         return weather * sensitivity;
     }

@@ -19,7 +19,11 @@ public class Telescope extends Weapon {
     @Override
     public void tick() {
         rotationalManager.tick();
-        rotationalManager.pointTo(getEntity());
+
+        // the aim only drives the model; shots carry the direction the client aimed at
+        if (getEntity().world.isRemote) {
+            rotationalManager.pointTo(getEntity());
+        }
 
         lastFireTick--;
         if (lastFireTick == 0) {

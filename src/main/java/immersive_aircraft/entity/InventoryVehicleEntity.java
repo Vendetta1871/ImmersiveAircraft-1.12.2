@@ -23,6 +23,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,8 +49,28 @@ public abstract class InventoryVehicleEntity extends VehicleEntity {
         return list;
     }
 
-    //todo cache?
+    /**
+     * Upgrades are queried several times per tick by the physics, so the totals are computed once
+     * per world tick; a change of the upgrade slots shows up on the next tick.
+     */
+    private final float[] upgradeCache = new float[AircraftStat.values().length];
+    private long upgradeCacheTime = Long.MIN_VALUE;
+
     public float getTotalUpgrade(AircraftStat stat) {
+        long time = world.getTotalWorldTime();
+        if (time != upgradeCacheTime) {
+            upgradeCacheTime = time;
+            Arrays.fill(upgradeCache, Float.NaN);
+        }
+        float value = upgradeCache[stat.ordinal()];
+        if (Float.isNaN(value)) {
+            value = computeTotalUpgrade(stat);
+            upgradeCache[stat.ordinal()] = value;
+        }
+        return value;
+    }
+
+    private float computeTotalUpgrade(AircraftStat stat) {
         float value = 1.0f;
         List<ItemStack> upgrades = getSlots(VehicleInventoryDescription.SlotType.UPGRADE);
         for (int step = 0; step < 2; step++) {
@@ -170,10 +191,13 @@ public abstract class InventoryVehicleEntity extends VehicleEntity {
 
             if (weaponItemStack.isEmpty() && weapon != null) {
                 weapons.remove(slot.index);
-            } else if (!weaponItemStack.isEmpty() && (weapon == null || weapon.get(0).getStack() != weaponItemStack)) {
+            } else if (!weaponItemStack.isEmpty() && (weapon == null || weapon.isEmpty() || weapon.get(0).getStack() != weaponItemStack)) {
                 WeaponRegistry.WeaponConstructor constructor = WeaponRegistry.get(weaponItemStack);
-                if (constructor != null) {
-                    List<WeaponMount> weaponMounts = getWeaponMounts(slot.index);
+                List<WeaponMount> weaponMounts = constructor == null ? EMPTY_WEAPONS : getWeaponMounts(slot.index);
+                if (weaponMounts.isEmpty()) {
+                    // no mount for this weapon type in this slot: the weapon stays inert
+                    this.weapons.remove(slot.index);
+                } else {
                     ArrayList<Weapon> weapons = new ArrayList<>(weaponMounts.size());
                     for (WeaponMount weaponMount : weaponMounts) {
                         weapons.add(constructor.create(this, weaponItemStack, weaponMount, slot.index));
@@ -262,8 +286,8 @@ public abstract class InventoryVehicleEntity extends VehicleEntity {
 
     public void fireWeapon(int slot, int index, net.minecraft.util.math.Vec3d direction) {
         List<Weapon> weaponList = getWeapons().get(slot);
-        if (weaponList != null && index < weaponList.size()) {
-            weaponList.get(index).fire(direction);
+        if (weaponList != null && index >= 0 && index < weaponList.size()) {
+            weaponList.get(index).serverFire(direction);
         }
     }
 

@@ -12,7 +12,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,8 +28,42 @@ import java.util.Set;
 public class SimpleWeaponRenderer extends WeaponRenderer<Weapon> {
     private final ResourceLocation id;
 
+    /**
+     * Mesh keys per rotating stage, rebuilt only when the baked model changes (resource reload)
+     * instead of every frame.
+     */
+    private BBModelBridge.Baked keysFor;
+    private List<String> baseKeys, yawKeys, pitchKeys, rollKeys;
+
     public SimpleWeaponRenderer(ResourceLocation id) {
         this.id = id;
+    }
+
+    private void updateKeys() {
+        BBModelBridge.Baked baked = BBModelBridge.get(id);
+        if (baked == keysFor) {
+            return;
+        }
+        keysFor = baked;
+
+        List<String> yaw = BBModelBridge.getSubtreeMeshKeys(id, "yaw");
+        List<String> pitch = BBModelBridge.getSubtreeMeshKeys(id, "pitch");
+        List<String> roll = BBModelBridge.getSubtreeMeshKeys(id, "roll");
+        baseKeys = without(BBModelBridge.getSubtreeMeshKeys(id, BBModelBridge.ROOT_BONE), yaw);
+        yawKeys = without(yaw, pitch);
+        pitchKeys = without(pitch, roll);
+        rollKeys = without(roll, Collections.emptyList());
+    }
+
+    private static List<String> without(List<String> keys, List<String> excluded) {
+        Set<String> excludedSet = new HashSet<>(excluded);
+        Set<String> result = new LinkedHashSet<>();
+        for (String key : keys) {
+            if (!excludedSet.contains(key)) {
+                result.add(key);
+            }
+        }
+        return new ArrayList<>(result);
     }
 
     @Override
@@ -50,15 +87,11 @@ public class SimpleWeaponRenderer extends WeaponRenderer<Weapon> {
                 }
             }
         } else {
-            Set<String> yawKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "yaw"));
-            Set<String> pitchKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "pitch"));
-            Set<String> rollKeys = new HashSet<>(BBModelBridge.getSubtreeMeshKeys(id, "roll"));
+            updateKeys();
 
             // static base (everything not in the yaw chain)
-            for (String key : BBModelBridge.getSubtreeMeshKeys(id, BBModelBridge.ROOT_BONE)) {
-                if (!yawKeys.contains(key)) {
-                    AircraftEntityRenderer.renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-                }
+            for (String key : baseKeys) {
+                AircraftEntityRenderer.renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
             }
 
             float yaw = (float) (manager.getYaw(tickDelta) / Math.PI * 180.0f);
@@ -72,17 +105,13 @@ public class SimpleWeaponRenderer extends WeaponRenderer<Weapon> {
             GlStateManager.pushMatrix();
             rotateAround(yawPivot, -yaw, 0.0f, 1.0f, 0.0f);
             for (String key : yawKeys) {
-                if (!pitchKeys.contains(key)) {
-                    AircraftEntityRenderer.renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-                }
+                AircraftEntityRenderer.renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
             }
 
             GlStateManager.pushMatrix();
             rotateAround(pitchPivot, pitch, 1.0f, 0.0f, 0.0f);
             for (String key : pitchKeys) {
-                if (!rollKeys.contains(key)) {
-                    AircraftEntityRenderer.renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-                }
+                AircraftEntityRenderer.renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
             }
 
             GlStateManager.pushMatrix();

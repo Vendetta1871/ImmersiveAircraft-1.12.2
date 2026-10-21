@@ -4,6 +4,7 @@ import immersive_aircraft.cobalt.network.Message;
 import immersive_aircraft.entity.EngineAircraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.MathHelper;
 
 public class EnginePowerMessage extends Message {
     private float engineTarget;
@@ -27,9 +28,13 @@ public class EnginePowerMessage extends Message {
 
     @Override
     public void receive(EntityPlayer e) {
+        // the value comes straight from the client
+        if (!Float.isFinite(engineTarget)) {
+            return;
+        }
         if (e.getLowestRidingEntity() instanceof EngineAircraft) {
             EngineAircraft entity = (EngineAircraft) e.getLowestRidingEntity();
-            entity.setEngineTarget(engineTarget);
+            entity.setEngineTarget(MathHelper.clamp(engineTarget, 0.0f, 1.0f));
         }
     }
 }

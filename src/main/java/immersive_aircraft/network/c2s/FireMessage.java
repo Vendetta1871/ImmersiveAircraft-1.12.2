@@ -46,8 +46,13 @@ public class FireMessage extends Message {
 
     @Override
     public void receive(EntityPlayer e) {
+        // the direction comes straight from the client
+        double length = direction.length();
+        if (!Double.isFinite(length) || length < 1.0e-4) {
+            return;
+        }
         if (e.getRidingEntity() instanceof InventoryVehicleEntity) {
-            ((InventoryVehicleEntity) e.getRidingEntity()).fireWeapon(slot, index, direction);
+            ((InventoryVehicleEntity) e.getRidingEntity()).fireWeapon(slot, index, direction.scale(1.0 / length));
         }
     }
 }

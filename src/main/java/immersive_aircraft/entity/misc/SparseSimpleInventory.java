@@ -81,12 +81,11 @@ public class SparseSimpleInventory implements IInventory {
             ItemStack trackedStack = tracked.get(index);
             if (!stacksEqual(stack, trackedStack)) {
                 tracked.set(index, stack.copy());
-                for (EntityPlayer p : entity.world.playerEntities) {
+                InventoryUpdateMessage message = new InventoryUpdateMessage(entity.getEntityId(), index, stack);
+                for (EntityPlayerMP p : NetworkHandler.getTrackingPlayers(entity)) {
                     // Players looking at the vehicle GUI get live updates through the container
                     if (!(p.openContainer instanceof VehicleScreenHandler && ((VehicleScreenHandler)p.openContainer).getVehicle() == entity)) {
-                        if (p instanceof EntityPlayerMP) {
-                            NetworkHandler.sendToPlayer(new InventoryUpdateMessage(entity.getEntityId(), index, stack), (EntityPlayerMP)p);
-                        }
+                        NetworkHandler.sendToPlayer(message, p);
                     }
                 }
             }

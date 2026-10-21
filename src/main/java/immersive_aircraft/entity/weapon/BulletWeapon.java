@@ -7,7 +7,6 @@ import immersive_aircraft.entity.misc.WeaponMount;
 import immersive_aircraft.network.s2c.FireResponse;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -67,11 +66,7 @@ public abstract class BulletWeapon extends Weapon {
         // Fire-particle
         Vec3d particleVelocity = direction.scale(0.25f).add(speed);
         FireResponse fireMessage = new FireResponse(px, py, pz, particleVelocity.x, particleVelocity.y, particleVelocity.z);
-        for (EntityPlayer player : entity.world.playerEntities) {
-            if (player instanceof EntityPlayerMP) {
-                NetworkHandler.sendToPlayer(fireMessage, (EntityPlayerMP) player);
-            }
-        }
+        NetworkHandler.sendToTracking(fireMessage, entity);
 
         // Play sound
         getEntity().playSound(getSound(), 1.0f, random.nextFloat() * 0.2f + 0.9f);

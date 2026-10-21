@@ -20,6 +20,7 @@ import net.minecraft.util.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -89,7 +90,7 @@ public class BBModelBridge {
 
     public static List<String> getSubtreeMeshKeys(ResourceLocation id, String bone) {
         List<String> keys = get(id).subtreeMeshKeys.get(bone);
-        return keys == null ? new ArrayList<>() : keys;
+        return keys == null ? Collections.emptyList() : keys;
     }
 
     public static ResourceLocation getTexture(ResourceLocation id, int index) {

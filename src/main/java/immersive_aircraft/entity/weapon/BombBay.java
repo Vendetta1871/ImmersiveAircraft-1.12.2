@@ -56,6 +56,12 @@ public class BombBay extends BulletWeapon {
     }
 
     @Override
+    protected int getMinFireInterval() {
+        // the client cooldown is 20 ticks
+        return 15;
+    }
+
+    @Override
     public void tick() {
         cooldown -= 1.0f / 20.0f;
     }

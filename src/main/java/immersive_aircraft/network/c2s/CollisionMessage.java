@@ -8,6 +8,11 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.DamageSource;
 
 public class CollisionMessage extends Message {
+    /**
+     * Well above any legit crash (damage = speed in blocks per tick * 20).
+     */
+    private static final float MAX_DAMAGE = 100.0f;
+
     private float damage;
 
     public CollisionMessage() {
@@ -29,6 +34,12 @@ public class CollisionMessage extends Message {
 
     @Override
     public void receive(EntityPlayer e) {
+        // the value comes straight from the client
+        if (!Float.isFinite(damage) || damage <= 0.0f) {
+            return;
+        }
+        damage = Math.min(damage, MAX_DAMAGE);
+
         if (e.getLowestRidingEntity() instanceof VehicleEntity) {
             VehicleEntity vehicle = (VehicleEntity) e.getLowestRidingEntity();
             vehicle.attackEntityFrom(DamageSource.FALL, damage);

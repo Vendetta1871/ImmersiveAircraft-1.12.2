@@ -51,9 +51,19 @@ public class RotaryCannon extends BulletWeapon {
     }
 
     @Override
+    protected int getMinFireInterval() {
+        // the client fires every 4 ticks (roll += 0.25 per tick)
+        return 3;
+    }
+
+    @Override
     public void tick() {
         rotationalManager.tick();
-        rotationalManager.pointTo(getEntity());
+
+        // the aim only drives the model; shots carry the direction the client aimed at
+        if (getEntity().world.isRemote) {
+            rotationalManager.pointTo(getEntity());
+        }
     }
 
     @Override

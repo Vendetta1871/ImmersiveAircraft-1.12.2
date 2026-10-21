@@ -21,6 +21,13 @@ public class BulletEntity extends Entity {
     private float damage = 1.0f;
     private Entity owner;
 
+    /**
+     * Bullets fly without gravity or drag, so without a lifetime a miss keeps flying until it
+     * reaches unloaded chunks and is saved there forever.
+     */
+    private static final int MAX_AGE = 200;
+    private int age;
+
     public BulletEntity(World world) {
         super(world);
         setSize(0.25f, 0.25f);
@@ -81,6 +88,11 @@ public class BulletEntity extends Entity {
     @Override
     public void onUpdate() {
         super.onUpdate();
+
+        if (++age > MAX_AGE) {
+            setDead();
+            return;
+        }
 
         if (motionX * motionX + motionY * motionY + motionZ * motionZ < 0.1) {
             setDead();
@@ -159,10 +171,12 @@ public class BulletEntity extends Entity {
     @Override
     protected void writeEntityToNBT(NBTTagCompound compound) {
         compound.setFloat("damage", damage);
+        compound.setShort("age", (short) age);
     }
 
     @Override
     protected void readEntityFromNBT(NBTTagCompound compound) {
         damage = compound.getFloat("damage");
+        age = compound.getShort("age");
     }
 }

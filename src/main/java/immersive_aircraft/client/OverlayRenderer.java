@@ -35,8 +35,9 @@ public class OverlayRenderer {
         }
 
         if (aircraft.getGuiStyle() == EngineAircraft.GUI_STYLE.ENGINE) {
-            float time = client.world.getWorldTime() % 65536 + tickDelta;
-            float delta = time - lastTime;
+            // total time keeps running with doDaylightCycle off and is not moved by /time set
+            float time = client.world.getTotalWorldTime() % 65536 + tickDelta;
+            float delta = Math.max(0.0f, time - lastTime);
             lastTime = time;
 
             // boot-up animation

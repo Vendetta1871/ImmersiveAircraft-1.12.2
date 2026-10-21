@@ -7,6 +7,7 @@ import immersive_aircraft.util.obj.Face;
 import immersive_aircraft.util.obj.FaceVertex;
 import immersive_aircraft.util.obj.Mesh;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.culling.ICamera;
@@ -18,8 +19,10 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.opengl.GL11;
 
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 1.12.2 port notes:
@@ -192,23 +195,54 @@ public abstract class AircraftEntityRenderer<T extends AircraftEntity> extends R
         super.doRender(entity, x, y, z, yaw, partialTicks);
     }
 
+    /**
+     * Static meshes are compiled once into a display list. The vertices carry no color, so the
+     * color is taken from the current GL color, which allows tinted meshes to share the list.
+     */
+    private static final Map<Mesh, Integer> DISPLAY_LISTS = new IdentityHashMap<>();
+
     public static void renderObject(Mesh mesh, float r, float g, float b, float a) {
+        Integer list = DISPLAY_LISTS.get(mesh);
+        if (list == null) {
+            list = compileDisplayList(mesh);
+            DISPLAY_LISTS.put(mesh, list);
+        }
+
+        GlStateManager.color(r, g, b, a);
+        GlStateManager.callList(list);
+        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+
+    private static int compileDisplayList(Mesh mesh) {
+        int list = GLAllocation.generateDisplayLists(1);
+        GlStateManager.glNewList(list, GL11.GL_COMPILE);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR_NORMAL);
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_NORMAL);
         for (Face face : mesh.faces) {
             if (face.vertices.size() == 4) {
                 for (FaceVertex v : face.vertices) {
                     buffer
                             .pos(v.v.x, v.v.y, v.v.z)
                             .tex(v.t.u, v.t.v)
-                            .color(r, g, b, a)
                             .normal(v.n.x, v.n.y, v.n.z)
                             .endVertex();
                 }
             }
         }
         tessellator.draw();
+        GlStateManager.glEndList();
+        return list;
+    }
+
+    /**
+     * Frees the compiled meshes; called when the meshes themselves are dropped on resource reload.
+     */
+    public static void clearDisplayLists() {
+        for (int list : DISPLAY_LISTS.values()) {
+            GLAllocation.deleteDisplayLists(list);
+        }
+        DISPLAY_LISTS.clear();
     }
 
     protected static void renderSailObject(Mesh mesh, double time, float r, float g, float b, float a) {

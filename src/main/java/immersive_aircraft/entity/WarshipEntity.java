@@ -283,7 +283,7 @@ public class WarshipEntity extends DyeableVehicleEntity {
     @Override
     public void fireWeapon(int slot, int index, Vec3d direction) {
         if (slot == -1) {
-            turret.fire(direction);
+            turret.serverFire(direction);
         } else {
             super.fireWeapon(slot, index, direction);
         }

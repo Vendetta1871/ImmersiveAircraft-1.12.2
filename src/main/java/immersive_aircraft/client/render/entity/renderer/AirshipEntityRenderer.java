@@ -61,7 +61,7 @@ public class AirshipEntityRenderer<T extends AirshipEntity> extends AircraftEnti
 
                                         if (entity.isWithinParticleRange() && Config.getInstance().enableAnimatedSails) {
                                             Mesh mesh = getFaces(id, "sails_animated");
-                                            float time = entity.world.getWorldTime() % 24000 + tickDelta;
+                                            float time = entity.world.getTotalWorldTime() % 24000 + tickDelta;
                                             renderSailObject(mesh, time, r, g, b, 1.0f);
                                         } else {
                                             Mesh mesh = getFaces(id, "sails");

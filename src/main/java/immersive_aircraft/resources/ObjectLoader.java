@@ -1,6 +1,7 @@
 package immersive_aircraft.resources;
 
 import immersive_aircraft.Main;
+import immersive_aircraft.client.render.entity.renderer.AircraftEntityRenderer;
 import immersive_aircraft.util.obj.Builder;
 import immersive_aircraft.util.obj.Mesh;
 import net.minecraft.client.Minecraft;
@@ -31,6 +32,7 @@ public class ObjectLoader implements IResourceManagerReloadListener {
         objects.clear();
         BBModelLoader.MODELS.clear();
         BBModelBridge.clearCache();
+        AircraftEntityRenderer.clearDisplayLists();
     }
 
     public static Mesh getObject(ResourceLocation id, String object) {

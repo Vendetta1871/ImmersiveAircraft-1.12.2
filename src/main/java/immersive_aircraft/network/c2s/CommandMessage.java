@@ -9,6 +9,11 @@ import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.Vec3d;
 
 public class CommandMessage extends Message {
+    /**
+     * Blocks per tick; vanilla rejects vehicle moves above 10 blocks per tick as well.
+     */
+    private static final double MAX_DISMOUNT_SPEED = 10.0;
+
     private Key key;
     private double fx;
     private double fy;
@@ -47,7 +52,15 @@ public class CommandMessage extends Message {
             if (key == Key.DISMOUNT) {
                 e.dismountRidingEntity();
                 vehicle.chill();
-                vehicle.setVelocity(fx, fy, fz);
+                // the velocity comes straight from the client
+                Vec3d velocity = new Vec3d(fx, fy, fz);
+                double speed = velocity.length();
+                if (Double.isFinite(speed)) {
+                    if (speed > MAX_DISMOUNT_SPEED) {
+                        velocity = velocity.scale(MAX_DISMOUNT_SPEED / speed);
+                    }
+                    vehicle.setVelocity(velocity);
+                }
             } else if (key == Key.BOOST) {
                 if (vehicle.canBoost()) {
                     vehicle.boost();

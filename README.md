@@ -24,7 +24,8 @@ Differences from the modern upstream branches:
 - Configuration via the in-game mod list ("Config" button), powered by Forge's
   `@Config` — there are no datapacks in 1.12.2, so aircraft balance lives in
   `config/immersive_aircraft.cfg`.
-- No mixins: all hooks use Forge events.
+- Hooks use Forge events where 1.12.2 has them; the rest (rider sneaking, vehicle
+  flight check, rider rendering) are Mixins booted from a coremod (`MixinLoader`).
 
 ### Building
 

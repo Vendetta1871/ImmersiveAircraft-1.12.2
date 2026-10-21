@@ -1,14 +1,19 @@
 package immersive_aircraft.cobalt.network;
 
 import immersive_aircraft.Main;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * 1.12.2 port: SimpleNetworkWrapper instead of the 1.16 forge SimpleChannel.
@@ -29,6 +34,33 @@ public class NetworkHandler {
 
     public static void sendToPlayer(Message m, EntityPlayerMP e) {
         INSTANCE.sendTo(m, e);
+    }
+
+    /**
+     * The players that have the entity loaded, i.e. those its tracker sends it to, plus its player
+     * passengers in case the tracker has not picked them up yet. Server side only.
+     */
+    public static Set<EntityPlayerMP> getTrackingPlayers(Entity entity) {
+        Set<EntityPlayerMP> players = new LinkedHashSet<>();
+        if (entity.world instanceof WorldServer) {
+            for (EntityPlayer player : ((WorldServer) entity.world).getEntityTracker().getTrackingPlayers(entity)) {
+                if (player instanceof EntityPlayerMP) {
+                    players.add((EntityPlayerMP) player);
+                }
+            }
+        }
+        for (Entity passenger : entity.getPassengers()) {
+            if (passenger instanceof EntityPlayerMP) {
+                players.add((EntityPlayerMP) passenger);
+            }
+        }
+        return players;
+    }
+
+    public static void sendToTracking(Message m, Entity entity) {
+        for (EntityPlayerMP player : getTrackingPlayers(entity)) {
+            INSTANCE.sendTo(m, player);
+        }
     }
 
     private static class Handler<T extends Message> implements IMessageHandler<T, IMessage> {

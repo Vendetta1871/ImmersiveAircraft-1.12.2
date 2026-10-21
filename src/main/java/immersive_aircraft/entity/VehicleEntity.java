@@ -384,7 +384,7 @@ public abstract class VehicleEntity extends Entity {
 
                 //animals are thicc
                 if (passenger instanceof EntityAnimal) {
-                    position.add(0.0f, 0.0f, 0.2f);
+                    position = position.add(0.0f, 0.0f, 0.2f);
                 }
 
                 position = position.add(0, passenger.getYOffset(), 0);
@@ -469,6 +469,9 @@ public abstract class VehicleEntity extends Entity {
                         if (repeat > 0.0001f) {
                             float damage = collision * 20 * repeat * repeat;
                             NetworkHandler.sendToServer(new CollisionMessage(damage));
+                            // predict the server's wobble reset, which only arrives after a round
+                            // trip; until then every colliding tick would send the full damage again
+                            setDamageWobbleTicks(10);
                         }
                     }
                 }
@@ -628,9 +631,17 @@ public abstract class VehicleEntity extends Entity {
     }
 
     public void setVelocity(Vec3d velocity) {
-        motionX = velocity.x;
-        motionY = velocity.y;
-        motionZ = velocity.z;
+        setMotion(velocity.x, velocity.y, velocity.z);
+    }
+
+    /**
+     * Side-safe replacement for {@link Entity#setVelocity(double, double, double)}, which is
+     * {@code @SideOnly(CLIENT)} in 1.12.2 and stripped from the dedicated server.
+     */
+    public void setMotion(double x, double y, double z) {
+        motionX = x;
+        motionY = y;
+        motionZ = z;
     }
 
     public double getX() {

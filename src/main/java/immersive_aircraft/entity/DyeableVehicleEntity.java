@@ -70,7 +70,7 @@ public abstract class DyeableVehicleEntity extends AirshipEntity {
         ItemStack held = player.getHeldItem(hand);
         if (held.getItem() instanceof ItemDye) {
             if (!world.isRemote) {
-                setDyeColor(EnumDyeColor.byDyeDamage(held.getMetadata()).getColorValue());
+                setDyeColor(getColorValue(EnumDyeColor.byDyeDamage(held.getMetadata())));
                 if (!player.capabilities.isCreativeMode) {
                     held.shrink(1);
                 }
@@ -78,6 +78,15 @@ public abstract class DyeableVehicleEntity extends AirshipEntity {
             return true;
         }
         return super.processInitialInteract(player, hand);
+    }
+
+    /**
+     * {@link EnumDyeColor#getColorValue()} is {@code @SideOnly(CLIENT)}; the component values hold
+     * the same color divided by 255 and exist on both sides.
+     */
+    private static int getColorValue(EnumDyeColor color) {
+        float[] c = color.getColorComponentValues();
+        return Math.round(c[0] * 255.0f) << 16 | Math.round(c[1] * 255.0f) << 8 | Math.round(c[2] * 255.0f);
     }
 
     public int getDyeColor() {
