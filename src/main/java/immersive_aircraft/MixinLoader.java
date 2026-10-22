@@ -19,7 +19,9 @@ import java.util.Map;
 @IFMLLoadingPlugin.Name(Main.MOD_ID)
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 @IFMLLoadingPlugin.SortingIndex(1001)
-@IFMLLoadingPlugin.TransformerExclusions("immersive_aircraft.mixin")
+// Only the loader itself: Mixin refuses to load mixin classes from an excluded package
+// (PACKAGE_TRANSFORMER_EXCLUSION), which silently dropped every mixin of the mod.
+@IFMLLoadingPlugin.TransformerExclusions("immersive_aircraft.MixinLoader")
 public class MixinLoader implements IFMLLoadingPlugin {
     public MixinLoader() {
         MixinBootstrap.init();

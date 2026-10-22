@@ -32,8 +32,10 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -366,6 +368,33 @@ public abstract class VehicleEntity extends Entity {
     }
 
     protected abstract void updateController();
+
+    private static final Field PASSENGERS_FIELD =
+            ObfuscationReflectionHelper.findField(Entity.class, "field_184244_h"); // riddenByEntities
+
+    /**
+     * 1.12.2 vanilla inserts a boarding player at index 0 as long as no player controls the
+     * vehicle ("taking the wheel" of a mob-drawn cart). The seat order of these vehicles is
+     * meaningful (index 0 is the pilot, index 1 the warship turret gunner) and later versions
+     * simply append, so restore the boarding order here.
+     */
+    @Override
+    protected void addPassenger(Entity passenger) {
+        super.addPassenger(passenger);
+        if (!world.isRemote && passenger instanceof EntityPlayer) {
+            try {
+                @SuppressWarnings("unchecked")
+                List<Entity> passengers = (List<Entity>) PASSENGERS_FIELD.get(this);
+                int index = passengers.indexOf(passenger);
+                if (index >= 0 && index != passengers.size() - 1) {
+                    passengers.remove(index);
+                    passengers.add(passenger);
+                }
+            } catch (IllegalAccessException e) {
+                immersive_aircraft.Main.LOGGER.warn("Could not reorder the passengers of " + this, e);
+            }
+        }
+    }
 
     @Override
     public void updatePassenger(Entity passenger) {

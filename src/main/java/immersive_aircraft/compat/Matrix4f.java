@@ -100,10 +100,6 @@ public class Matrix4f {
         return i;
     }
 
-    private static int pack(int x, int y) {
-        return y * 4 + x;
-    }
-
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Mat4f:\n");
@@ -146,22 +142,22 @@ public class Matrix4f {
      * Writes this matrix to the buffer in row-major order.
      */
     public void writeRowFirst(FloatBuffer buf) {
-        buf.put(Matrix4f.pack(0, 0), this.a00);
-        buf.put(Matrix4f.pack(0, 1), this.a01);
-        buf.put(Matrix4f.pack(0, 2), this.a02);
-        buf.put(Matrix4f.pack(0, 3), this.a03);
-        buf.put(Matrix4f.pack(1, 0), this.a10);
-        buf.put(Matrix4f.pack(1, 1), this.a11);
-        buf.put(Matrix4f.pack(1, 2), this.a12);
-        buf.put(Matrix4f.pack(1, 3), this.a13);
-        buf.put(Matrix4f.pack(2, 0), this.a20);
-        buf.put(Matrix4f.pack(2, 1), this.a21);
-        buf.put(Matrix4f.pack(2, 2), this.a22);
-        buf.put(Matrix4f.pack(2, 3), this.a23);
-        buf.put(Matrix4f.pack(3, 0), this.a30);
-        buf.put(Matrix4f.pack(3, 1), this.a31);
-        buf.put(Matrix4f.pack(3, 2), this.a32);
-        buf.put(Matrix4f.pack(3, 3), this.a33);
+        buf.put(0, this.a00);
+        buf.put(1, this.a01);
+        buf.put(2, this.a02);
+        buf.put(3, this.a03);
+        buf.put(4, this.a10);
+        buf.put(5, this.a11);
+        buf.put(6, this.a12);
+        buf.put(7, this.a13);
+        buf.put(8, this.a20);
+        buf.put(9, this.a21);
+        buf.put(10, this.a22);
+        buf.put(11, this.a23);
+        buf.put(12, this.a30);
+        buf.put(13, this.a31);
+        buf.put(14, this.a32);
+        buf.put(15, this.a33);
     }
 
     public void loadIdentity() {

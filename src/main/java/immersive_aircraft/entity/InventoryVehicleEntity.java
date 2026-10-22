@@ -111,6 +111,18 @@ public abstract class InventoryVehicleEntity extends VehicleEntity {
         }
     }
 
+    /**
+     * Lets {@code /replaceitem entity <vehicle> slot.container.<n> ...} fill the vehicle inventory.
+     */
+    @Override
+    public boolean replaceItemInInventory(int inventorySlot, ItemStack itemStack) {
+        if (inventorySlot >= 0 && inventorySlot < inventory.getSizeInventory()) {
+            inventory.setStack(inventorySlot, itemStack);
+            return true;
+        }
+        return false;
+    }
+
     public void openInventory(EntityPlayerMP player) {
         player.openGui(Main.instance, GuiHandler.GUI_VEHICLE, player.world, getEntityId(), 0, 0);
     }

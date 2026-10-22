@@ -84,3 +84,11 @@ jar {
         ])
     }
 }
+
+// Dev runs sit on the classpath instead of in mods/, so the Mixin core plugin (see MixinLoader)
+// has to be named explicitly. IA_AUTOTEST runs (see client.debug.AutoTest) use a fixed user name
+// so that it can be op on a dev server.
+[runClient, runServer]*.jvmArgs '-Dfml.coreMods.load=immersive_aircraft.MixinLoader'
+if (System.getenv('IA_AUTOTEST') != null) {
+    runClient.args '--username', 'IATest'
+}

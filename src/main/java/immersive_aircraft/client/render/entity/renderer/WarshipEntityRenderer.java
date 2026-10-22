@@ -88,16 +88,17 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
 
         envelopeKeys = filterKeys(baked, "envelope", ENVELOPE_SPECIAL, true);
 
-        Set<String> gondolaExcluded = new HashSet<>(subtree(baked, "turret_seat"));
+        // the whole turret moves: arms_joint (pitch) holds turret_seat (yaw), which holds the crossbow
+        Set<String> gondolaExcluded = new HashSet<>(subtree(baked, "arms_joint"));
         gondolaExcluded.add("propeller");
         gondolaKeys = filterKeys(baked, "gondola", gondolaExcluded, true);
 
-        turretKeys = filterKeys(baked, "turret_seat", subtree(baked, "arms_joint"), true);
+        armsKeys = filterKeys(baked, "arms_joint", subtree(baked, "turret_seat"), true);
 
-        Set<String> armsExcluded = new HashSet<>(subtree(baked, "bolt"));
-        armsExcluded.addAll(subtree(baked, "left_limb_base"));
-        armsExcluded.addAll(subtree(baked, "right_limb_base"));
-        armsKeys = filterKeys(baked, "arms_joint", armsExcluded, true);
+        Set<String> turretExcluded = new HashSet<>(subtree(baked, "bolt"));
+        turretExcluded.addAll(subtree(baked, "left_limb_base"));
+        turretExcluded.addAll(subtree(baked, "right_limb_base"));
+        turretKeys = filterKeys(baked, "turret_seat", turretExcluded, true);
 
         boltKeys = filterKeys(baked, "bolt", Collections.emptySet(), false);
 
@@ -207,11 +208,21 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
             GlStateManager.popMatrix();
         }
 
-        // turret: yaw around the seat pivot, pitch around the arms pivot (nested).
-        // Sign conventions derived from the 1.20.1 animation variables
-        // (turret_yaw -> -yaw, turret_pitch -> +pitch in model space).
+        // turret, nested as in the model (1.20.1 animation variables): turret_pitch rotates
+        // arms_joint, turret_yaw rotates turret_seat inside it (turret_yaw -> -yaw,
+        // turret_pitch -> +pitch in model space)
+        float[] armsPivot = BBModelBridge.getPivot(id, "arms_joint");
         float[] seatPivot = BBModelBridge.getPivot(id, "turret_seat");
-        if (seatPivot != null) {
+        if (armsPivot != null && seatPivot != null) {
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(armsPivot[0], armsPivot[1], armsPivot[2]);
+            GlStateManager.rotate(entity.turretPitch.getSmooth(tickDelta), 1.0f, 0.0f, 0.0f);
+            GlStateManager.translate(-armsPivot[0], -armsPivot[1], -armsPivot[2]);
+
+            for (String key : armsKeys) {
+                renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
+            }
+
             GlStateManager.pushMatrix();
             GlStateManager.translate(seatPivot[0], seatPivot[1], seatPivot[2]);
             GlStateManager.rotate(-entity.turretYaw.getSmooth(tickDelta), 0.0f, 1.0f, 0.0f);
@@ -221,36 +232,23 @@ public class WarshipEntityRenderer<T extends WarshipEntity> extends DyeableVehic
                 renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
             }
 
-            float[] armsPivot = BBModelBridge.getPivot(id, "arms_joint");
-            if (armsPivot != null) {
+            // crossbow reload animation (1.20.1: turret_cooldown variable)
+            float loaded = 1.0f - entity.getTurret().getCooldown();
+
+            // bolt position
+            if (!boltKeys.isEmpty()) {
                 GlStateManager.pushMatrix();
-                GlStateManager.translate(armsPivot[0], armsPivot[1], armsPivot[2]);
-                GlStateManager.rotate(entity.turretPitch.getSmooth(tickDelta), 1.0f, 0.0f, 0.0f);
-                GlStateManager.translate(-armsPivot[0], -armsPivot[1], -armsPivot[2]);
-
-                // crossbow reload animation (1.20.1: turret_cooldown variable)
-                float loaded = 1.0f - entity.getTurret().getCooldown();
-
-                for (String key : armsKeys) {
+                GlStateManager.translate(0.0f, 0.0f, loaded * 2.0f / 16.0f);
+                for (String key : boltKeys) {
                     renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
                 }
-
-                // bolt position
-                if (!boltKeys.isEmpty()) {
-                    GlStateManager.pushMatrix();
-                    GlStateManager.translate(0.0f, 0.0f, loaded * 2.0f / 16.0f);
-                    for (String key : boltKeys) {
-                        renderObject(BBModelBridge.getMesh(id, key), 1.0f, 1.0f, 1.0f, 1.0f);
-                    }
-                    GlStateManager.popMatrix();
-                }
-
-                renderLimb(id, "left_limb_base", "string_hinge", -loaded * 4.0f, loaded * 20.0f, leftLimbKeys, leftHingeKeys);
-                renderLimb(id, "right_limb_base", "string_hinge2", loaded * 5.0f, -loaded * 20.0f, rightLimbKeys, rightHingeKeys);
-
                 GlStateManager.popMatrix();
             }
 
+            renderLimb(id, "left_limb_base", "string_hinge", -loaded * 4.0f, loaded * 20.0f, leftLimbKeys, leftHingeKeys);
+            renderLimb(id, "right_limb_base", "string_hinge2", loaded * 5.0f, -loaded * 20.0f, rightLimbKeys, rightHingeKeys);
+
+            GlStateManager.popMatrix();
             GlStateManager.popMatrix();
         }
     }
