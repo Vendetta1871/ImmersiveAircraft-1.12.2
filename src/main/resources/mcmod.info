@@ -7,8 +7,8 @@
     "mcversion": "1.12.2",
     "url": "https://www.curseforge.com/minecraft/mc-mods/immersive-aircraft",
     "updateUrl": "",
-    "authorList": ["conczin", "Luke100000"],
-    "credits": "",
+    "authorList": ["CelestialD"],
+    "credits": "Original mod: Immersive Aircraft by conczin, Luke100000",
     "logoFile": "icon.png",
     "screenshots": [],
     "dependencies": []
