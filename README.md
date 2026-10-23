@@ -27,6 +27,15 @@ Differences from the modern upstream branches:
 - Hooks use Forge events where 1.12.2 has them; the rest (rider sneaking, vehicle
   flight check, rider rendering) are Mixins booted from a coremod (`MixinLoader`).
 
+### Runtime requirements
+
+The released jar does not bundle the Mixin library, so it must be provided at
+runtime: install [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixin-booter)
+(also on [Modrinth](https://modrinth.com/mod/mixinbooter)) alongside this mod.
+Without it the `MixinLoader` coremod cannot boot Mixin and the game will not
+start. Dev runs (`runClient`/`runServer`) get the library from the Gradle
+classpath and do not need it.
+
 ### Building
 
 Requirements: **JDK 8** (ForgeGradle 2.3 does not run on newer JDKs).
