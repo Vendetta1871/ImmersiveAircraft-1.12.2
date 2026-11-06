@@ -7,11 +7,11 @@
 
 [github-badge]: https://img.shields.io/badge/GitHub-Source-181717?style=for-the-badge&logo=github&logoColor=white
 [github]: https://github.com/Vendetta1871/ImmersiveAircraft-1.12.2
-[discord-badge]: docs/badges/discord.svg
+[discord-badge]: https://raw.githubusercontent.com/Vendetta1871/ImmersiveAircraft-1.12.2/1.12.2/docs/badges/discord.svg
 [discord]: https://discord.gg/gvmeswCQFP
 [modrinth-badge]: https://img.shields.io/badge/Modrinth-Download-00AF5C?style=for-the-badge&logo=modrinth&logoColor=white
 [modrinth]: https://modrinth.com/mod/immersive-aircraft-unofficial-backport
-[curseforge-badge]: docs/badges/curseforge.svg
+[curseforge-badge]: https://raw.githubusercontent.com/Vendetta1871/ImmersiveAircraft-1.12.2/1.12.2/docs/badges/curseforge.svg
 [curseforge]: https://www.curseforge.com/minecraft/mc-mods/immersive-aircraft-legacy
 
 Fork of [Luke100000's Immersive Aircraft](https://github.com/Luke100000/ImmersiveAircraft),
